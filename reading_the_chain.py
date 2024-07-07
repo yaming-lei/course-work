@@ -52,7 +52,7 @@ def is_ordered_block(w3, block_num):
     """
 	EIP_1559_BLOCK_NUM = 12965000
 
-	block = w3.eth.get_block(block_num, full_transactions=False)
+	block = w3.eth.get_block(block_num, full_transactions=True)
 
 	def get_priority_fee(tx, base_fee):
 		if tx['type'] == '0x2':
@@ -64,14 +64,10 @@ def is_ordered_block(w3, block_num):
 		return priority_fee
 
 	if block_num < EIP_1559_BLOCK_NUM:
-
-		transactions = [w3.eth.get_transaction(tx) for tx in block.transactions]
-		fees = [tx['gasPrice'] for tx in transactions]
+		fees = [tx['gasPrice'] for tx in block['transactions']]
 	else:
-
 		base_fee = block.get('baseFeePerGas', 0)
-		transactions = [w3.eth.get_transaction(tx) for tx in block.transactions]
-		fees = [get_priority_fee(tx, base_fee) for tx in transactions]
+		fees = [get_priority_fee(tx, base_fee) for tx in block['transactions']]
 
 	return fees == sorted(fees, reverse=True)
 
