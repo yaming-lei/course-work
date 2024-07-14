@@ -7,7 +7,7 @@ def sign(m):
     # create an eth account and recover the address (derived from the public key) and private key
     account = eth_account.Account.create()
     address = account.address
-    key = account.privateKey
+    key = account.key
 
     # generate signature
     message = encode_defunct(text=m)
