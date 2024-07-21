@@ -7,7 +7,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware  # Necessary for POA chains
 import hashlib
 from eth_account.messages import encode_defunct
-
+from hexbytes import HexBytes
 
 
 def merkle_assignment():
@@ -40,7 +40,7 @@ def merkle_assignment():
         tx_hash = '0x'
         # TODO, when you are ready to attempt to claim a prime (and pay gas fees),
         #  complete this method and run your code with the following line un-commented
-        # tx_hash = send_signed_msg(proof, leaves[random_leaf_index])
+        tx_hash = send_signed_msg(proof, leaves[random_leaf_index])
 
 
 def generate_primes(num_primes):
@@ -178,7 +178,10 @@ def send_signed_msg(proof, random_leaf):
     contract = w3.eth.contract(address=address, abi=abi)
     nonce = w3.eth.get_transaction_count(acct.address)
 
-    # 构建交易
+    proof = [bytes(p) if isinstance(p, HexBytes) else p for p in proof]
+    random_leaf = bytes(random_leaf) if isinstance(random_leaf,
+                                                   HexBytes) else random_leaf
+
     transaction = contract.functions.submit(proof,
                                             random_leaf).build_transaction({
         'from': acct.address,
@@ -186,6 +189,7 @@ def send_signed_msg(proof, random_leaf):
         'gas': 2000000,
         'gasPrice': w3.to_wei('50', 'gwei')
     })
+
 
     signed_tx = w3.eth.account.sign_transaction(transaction,
                                                 private_key=acct.key)
