@@ -186,8 +186,7 @@ def send_signed_msg(proof, random_leaf):
                                             random_leaf).build_transaction({
         'from': acct.address,
         'nonce': nonce,
-        'gas': 2000000,
-        'gasPrice': w3.to_wei('50', 'gwei')
+        'gas': 2000000
     })
 
 
