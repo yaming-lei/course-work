@@ -104,7 +104,7 @@ def build_merkle(leaves):
         the root hash produced by the "hash_pair" helper function
     """
 
-    tree = [leaves]  # Initialize the tree with the leaves as the first level
+    tree = [leaves]
 
     while len(tree[-1]) > 1:
         current_level = tree[-1]
@@ -178,15 +178,18 @@ def send_signed_msg(proof, random_leaf):
     contract = w3.eth.contract(address=address, abi=abi)
     nonce = w3.eth.get_transaction_count(acct.address)
 
-    proof = [bytes(p) if isinstance(p, HexBytes) else p for p in proof]
-    random_leaf = bytes(random_leaf) if isinstance(random_leaf,
-                                                   HexBytes) else random_leaf
-
+    proof = [Web3.to_bytes(p).rjust(32, b'\x00') if isinstance(p, int) else p
+             for p in proof]
+    random_leaf = Web3.to_bytes(random_leaf).rjust(32, b'\x00') if isinstance(
+        random_leaf, int) else random_leaf
+    print(f"Proof: {[p.hex() for p in proof]}")
+    print(f"Random leaf: {random_leaf.hex()}")
     transaction = contract.functions.submit(proof,
                                             random_leaf).build_transaction({
         'from': acct.address,
         'nonce': nonce,
-        'gas': 2000000
+        'gas': 2000000,
+
     })
 
 
