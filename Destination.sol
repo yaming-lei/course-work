@@ -39,11 +39,6 @@ contract Destination is AccessControl {
     function wrap(address _underlying_token, address _recipient, uint256 _amount) public onlyRole(WARDEN_ROLE) {
         require(wrapped_tokens[_underlying_token] != address(0), "Wrapped token not registered");
 
-        uint256 allowance = ERC20(_underlying_token).allowance(msg.sender, address(this));
-        require(allowance >= _amount, "ERC20: insufficient allowance");
-
-        bool success = ERC20(_underlying_token).transferFrom(msg.sender, address(this), _amount);
-        require(success, "Transfer failed");
 
         BridgeToken wrappedToken = BridgeToken(wrapped_tokens[_underlying_token]);
         wrappedToken.mint(_recipient, _amount);
@@ -54,14 +49,9 @@ contract Destination is AccessControl {
     function unwrap(address _wrapped_token, address _recipient, uint256 _amount) public {
         address underlying_token = underlying_tokens[_wrapped_token];
         require(underlying_token != address(0), "Invalid wrapped token");
-
         BridgeToken wrappedToken = BridgeToken(_wrapped_token);
-        require(wrappedToken.balanceOf(msg.sender) >= _amount, "Insufficient balance");
 
         wrappedToken.burnFrom(msg.sender, _amount);
-
-        bool success = ERC20(underlying_token).transfer(_recipient, _amount);
-        require(success, "Transfer failed");
 
         emit Unwrap(underlying_token, _wrapped_token, msg.sender, _recipient, _amount);
     }
