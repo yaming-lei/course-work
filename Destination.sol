@@ -23,7 +23,6 @@ contract Destination is AccessControl {
     }
 
 function wrap(address _underlying_token, address _recipient, uint256 _amount ) public onlyRole(WARDEN_ROLE) {
-= 
     address wrapped_token_address = wrapped_tokens[_underlying_token];
     require(wrapped_token_address != address(0), "Token not registered");  
     BridgeToken wrappedToken = BridgeToken(wrapped_token_address);
