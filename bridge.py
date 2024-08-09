@@ -88,7 +88,7 @@ def scanBlocks(chain):
                 'from': account_address,
                 'nonce': opposite_w3.eth.get_transaction_count(account_address),
                 'gas': 2000000,
-                'gasPrice': opposite_w3.eth.gas_price,
+                'gasPrice': w3.toWei('50', 'gwei'),
             })
             # Sign and send the transaction
             receipt = signAndSendTransaction(opposite_w3, account_address, private_key, tx)
