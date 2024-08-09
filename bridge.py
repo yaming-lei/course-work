@@ -12,6 +12,8 @@ contract_info = "contract_info.json"
 private_key = "ba9d6d3a37734f16b93cfe8410b60640e54048223f4baa2f9fac96096153c8ca"
 account_address = '0xBF6aa3c282df65D083783CE17de5cd00e1d409D4'
 
+
+
 def connectTo(chain):
     if chain == 'avax':
         api_url = f"https://api.avax-test.network/ext/bc/C/rpc" #AVAX C-chain testnet
@@ -42,6 +44,8 @@ def getContractInfo(chain):
 
     return contracts[chain]
 
+
+
 def scanBlocks(chain):
     """
         chain - (string) should be either "source" or "destination"
@@ -55,7 +59,7 @@ def scanBlocks(chain):
         print( f"Invalid chain: {chain}" )
         return
     
-    #YOUR CODE HERE
+        #YOUR CODE HERE
     w3_src = connectTo(source_chain)
     w3_dst = connectTo(destination_chain)
     source_contracts = getContractInfo("source")
