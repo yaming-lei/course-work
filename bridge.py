@@ -60,45 +60,51 @@ def scanBlocks(chain):
         return
     
         #YOUR CODE HERE
-    w3_src = connectTo(source_chain)
-    w3_dst = connectTo(destination_chain)
-    source_contracts = getContractInfo("source")
-    destination_contracts = getContractInfo("destination")
-    source_contract_address, src_abi = source_contracts["address"], source_contracts["abi"]
-    destination_contract_address, dst_abi = destination_contracts["address"], destination_contracts["abi"]
-    
-    source_contract = w3_src.eth.contract(address=source_contract_address, abi=src_abi)
-    destination_contract = w3_dst.eth.contract(address=destination_contract_address, abi=dst_abi)
+    src_web3 = connectTo(source_chain)
+    dst_web3 = connectTo(destination_chain)
 
-    
-    src_end_block = w3_src.eth.get_block_number()
-    src_start_block = src_end_block - 5
-    dst_end_block = w3_dst.eth.get_block_number()
-    dst_start_block = dst_end_block - 5
+    src_contract_data = getContractInfo("source")
+    dst_contract_data = getContractInfo("destination")
 
-    arg_filter = {}
-    if chain == "source":  #Source
-        
-        event_filter = source_contract.events.Deposit.create_filter(fromBlock=src_start_block, toBlock = src_end_block, argument_filters=arg_filter)
-        for event in event_filter.get_all_entries():
-            txn = destination_contract.functions.wrap(event.args['token'], event.args['recipient'], event.args['amount']).build_transaction({
+    src_contract = src_web3.eth.contract(address=src_contract_data["address"], abi=src_contract_data["abi"])
+    dst_contract = dst_web3.eth.contract(address=dst_contract_data["address"], abi=dst_contract_data["abi"])
+
+    src_latest_block = src_web3.eth.get_block_number()
+    dst_latest_block = dst_web3.eth.get_block_number()
+
+    src_block_range = {'start': src_latest_block - 5, 'end': src_latest_block}
+    dst_block_range = {'start': dst_latest_block - 5, 'end': dst_latest_block}
+
+    filter_params = {}
+
+    if network == "source":  # Processing Source Chain Events
+        deposit_events = src_contract.events.Deposit.create_filter(
+            fromBlock=src_block_range['start'], toBlock=src_block_range['end'], argument_filters=filter_params)
+
+        for event in deposit_events.get_all_entries():
+            transaction = dst_contract.functions.wrap(
+                event.args['token'], event.args['recipient'], event.args['amount']
+            ).build_transaction({
                 'from': account_address,
-                'chainId': w3_dst.eth.chain_id,
+                'chainId': dst_web3.eth.chain_id,
                 'gas': 5000000,
-                'nonce': w3_dst.eth.get_transaction_count(account_address)
+                'nonce': dst_web3.eth.get_transaction_count(account_address)
             })
-            signed_txn = w3_dst.eth.account.sign_transaction(txn, private_key=private_key)
-            w3_dst.eth.send_raw_transaction(signed_txn.rawTransaction)
+            signed_transaction = dst_web3.eth.account.sign_transaction(transaction, private_key=private_key)
+            dst_web3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-    elif chain == "destination":  #Destination
-        
-        event_filter = destination_contract.events.Unwrap.create_filter(fromBlock=dst_start_block, toBlock = dst_end_block, argument_filters=arg_filter)
-        for event in event_filter.get_all_entries():
-            txn = source_contract.functions.withdraw(event.args['underlying_token'], event.args['to'], event.args['amount']).build_transaction({
-            'from': account_address,
-            'chainId': w3_src.eth.chain_id,
-            'gas': 500000,
-            'nonce': w3_src.eth.get_transaction_count(account_address)
+    elif network == "destination":  # Processing Destination Chain Events
+        unwrap_events = dst_contract.events.Unwrap.create_filter(
+            fromBlock=dst_block_range['start'], toBlock=dst_block_range['end'], argument_filters=filter_params)
+
+        for event in unwrap_events.get_all_entries():
+            transaction = src_contract.functions.withdraw(
+                event.args['underlying_token'], event.args['to'], event.args['amount']
+            ).build_transaction({
+                'from': account_address,
+                'chainId': src_web3.eth.chain_id,
+                'gas': 500000,
+                'nonce': src_web3.eth.get_transaction_count(account_address)
             })
-            signed_txn = w3_src.eth.account.sign_transaction(txn, private_key=private_key)
-            w3_src.eth.send_raw_transaction(signed_txn.rawTransaction)
+            signed_transaction = src_web3.eth.account.sign_transaction(transaction, private_key=private_key)
+            src_web3.eth.send_raw_transaction(signed_transaction.rawTransaction)
