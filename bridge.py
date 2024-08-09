@@ -23,7 +23,6 @@ tokens = [
 avax_web3 = Web3(Web3.HTTPProvider(avax_rpc_url))
 bsc_web3 = Web3(Web3.HTTPProvider(bsc_rpc_url))
 
-
 # Load contract information from the JSON file
 def getContractInfo():
     p = Path(__file__).with_name(contract_info_file)
@@ -35,22 +34,20 @@ def getContractInfo():
         print("Please contact your instructor")
         print(e)
         sys.exit(1)
-
+    
     return contracts
 
-
 contract_info = getContractInfo()
-
-destination_contract = bsc_web3.eth.contract(
-    address=Web3.to_checksum_address(contract_info['destination']['address']),
-    abi=contract_info['destination']['abi']
-)
 
 source_contract = avax_web3.eth.contract(
     address=Web3.to_checksum_address(contract_info['source']['address']),
     abi=contract_info['source']['abi']
 )
 
+destination_contract = bsc_web3.eth.contract(
+    address=Web3.to_checksum_address(contract_info['destination']['address']),
+    abi=contract_info['destination']['abi']
+)
 
 def connectTo(chain):
     if chain == 'avax':
@@ -78,11 +75,8 @@ def scanBlocks(chain):
         print(f"Invalid chain: {chain}")
         return
 
-    # YOUR CODE HERE
-    w3_src = connectTo(source_chain)
-    w3_dst = connectTo(destination_chain)
-    source_contracts = contract_info['source']
-    destination_contracts = contract_info['destination']
+    w3_src = avax_web3 if chain == 'source' else bsc_web3
+    w3_dst = bsc_web3 if chain == 'source' else avax_web3
 
     src_end_block = w3_src.eth.get_block_number()
     src_start_block = src_end_block - 5
@@ -98,16 +92,13 @@ def scanBlocks(chain):
         for event in event_filter.get_all_entries():
             txn = destination_contract.functions.wrap(event.args['token'],
                                                       event.args['recipient'],
-                                                      event.args[
-                                                          'amount']).build_transaction(
-                {
-                    'from': account_address,
-                    'chainId': w3_dst.eth.chain_id,
-                    'gas': 5000000,
-                    'nonce': w3_dst.eth.get_transaction_count(account_address)
-                })
-            signed_txn = w3_dst.eth.account.sign_transaction(txn,
-                                                             private_key=private_key)
+                                                      event.args['amount']).build_transaction({
+                'from': account_address,
+                'chainId': w3_dst.eth.chain_id,
+                'gas': 5000000,
+                'nonce': w3_dst.eth.get_transaction_count(account_address)
+            })
+            signed_txn = w3_dst.eth.account.sign_transaction(txn, private_key=private_key)
             w3_dst.eth.send_raw_transaction(signed_txn.rawTransaction)
 
     elif chain == "destination":  # Destination
@@ -124,8 +115,7 @@ def scanBlocks(chain):
                 'gas': 500000,
                 'nonce': w3_src.eth.get_transaction_count(account_address)
             })
-            signed_txn = w3_src.eth.account.sign_transaction(txn,
-                                                             private_key=private_key)
+            signed_txn = w3_src.eth.account.sign_transaction(txn, private_key=private_key)
             w3_src.eth.send_raw_transaction(signed_txn.rawTransaction)
 
 
