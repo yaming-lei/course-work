@@ -27,7 +27,7 @@ def connectTo(chain):
 
 def getContractInfo(chain):
     """
-        Load the contract_info file into a dictinary
+        Load the contract_info file into a dictionary
         This function is used by the autograder and will likely be useful to you
     """
     p = Path(__file__).with_name(contract_info)
@@ -42,6 +42,49 @@ def getContractInfo(chain):
 
     return contracts[chain]
 
+def registerAndCreateTokens(source_contract, destination_contract, tokens):
+    """
+    Register tokens on the source contract and create corresponding tokens on the destination contract.
+    """
+    for token in tokens:
+        try:
+            # Register token on the source chain
+            nonce = source_contract.web3.eth.get_transaction_count(account_address, 'pending')
+            tx = source_contract.functions.registerToken(
+                Web3.to_checksum_address(token)
+            ).build_transaction({
+                'from': account_address,
+                'nonce': nonce,
+                'gas': 500000,
+                'gasPrice': source_contract.web3.to_wei('50', 'gwei')
+            })
+
+            signed_txn = source_contract.web3.eth.account.sign_transaction(tx, private_key=private_key)
+            tx_hash = source_contract.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            print(f"registerToken Transaction hash: {tx_hash.hex()}")
+            source_contract.web3.eth.wait_for_transaction_receipt(tx_hash)
+
+            # Create token on the destination chain
+            nonce = destination_contract.web3.eth.get_transaction_count(account_address, 'pending')
+            tx = destination_contract.functions.createToken(
+                Web3.to_checksum_address(token),
+                "Wrapped Token",  # You can customize the token name
+                "WTKN"  # You can customize the token symbol
+            ).build_transaction({
+                'from': account_address,
+                'nonce': nonce,
+                'gas': 500000,
+                'gasPrice': destination_contract.web3.to_wei('50', 'gwei')
+            })
+
+            signed_txn = destination_contract.web3.eth.account.sign_transaction(tx, private_key=private_key)
+            tx_hash = destination_contract.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            print(f"createToken Transaction hash: {tx_hash.hex()}")
+            destination_contract.web3.eth.wait_for_transaction_receipt(tx_hash)
+
+        except Exception as e:
+            print(f"Failed to register or create token {token}: {e}")
+
 def scanBlocks(chain):
     """
         chain - (string) should be either "source" or "destination"
@@ -52,10 +95,9 @@ def scanBlocks(chain):
     """
 
     if chain not in ['source','destination']:
-        print( f"Invalid chain: {chain}" )
+        print(f"Invalid chain: {chain}")
         return
     
-    #YOUR CODE HERE
     w3_src = connectTo(source_chain)
     w3_dst = connectTo(destination_chain)
     source_contracts = getContractInfo("source")
@@ -66,6 +108,12 @@ def scanBlocks(chain):
     source_contract = w3_src.eth.contract(address=source_contract_address, abi=src_abi)
     destination_contract = w3_dst.eth.contract(address=destination_contract_address, abi=dst_abi)
 
+    # Register and create tokens before scanning blocks
+    tokens = [
+        "0xc677c31AD31F73A5290f5ef067F8CEF8d301e45c",
+        "0x0773b81e0524447784CcE1F3808fed6AaA156eC8"
+    ]
+    registerAndCreateTokens(source_contract, destination_contract, tokens)
     
     src_end_block = w3_src.eth.get_block_number()
     src_start_block = src_end_block - 5
@@ -98,3 +146,9 @@ def scanBlocks(chain):
             })
             signed_txn = w3_src.eth.account.sign_transaction(txn, private_key=private_key)
             w3_src.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+# Example usage
+if __name__ == "__main__":
+    # Start scanning blocks on both source and destination chains
+    scanBlocks('source')
+    scanBlocks('destination')
