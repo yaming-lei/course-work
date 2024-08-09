@@ -84,7 +84,7 @@ def scanBlocks(chain):
             txn = destination_contract.functions.wrap(event.args['token'], event.args['recipient'], event.args['amount']).build_transaction({
                 'from': account_address,
                 'chainId': w3_dst.eth.chain_id,
-                'gas': 100,
+                'gas': 50000,
                 'nonce': w3_dst.eth.get_transaction_count(account_address)
             })
             signed_txn = w3_dst.eth.account.sign_transaction(txn, private_key=private_key)
@@ -97,7 +97,7 @@ def scanBlocks(chain):
             txn = source_contract.functions.withdraw(event.args['underlying_token'], event.args['to'], event.args['amount']).build_transaction({
             'from': account_address,
             'chainId': w3_src.eth.chain_id,
-            'gas':  100,
+            'gas': 50000,
             'nonce': w3_src.eth.get_transaction_count(account_address)
             })
             signed_txn = w3_src.eth.account.sign_transaction(txn, private_key=private_key)
