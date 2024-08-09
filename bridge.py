@@ -24,7 +24,11 @@ avax_web3 = Web3(Web3.HTTPProvider(avax_rpc_url))
 bsc_web3 = Web3(Web3.HTTPProvider(bsc_rpc_url))
 
 # Load contract information from the JSON file
-def getContractInfo():
+def getContractInfo(chain):
+    """
+        Load the contract_info file into a dictionary
+        This function returns the contract information for the specified chain
+    """
     p = Path(__file__).with_name(contract_info_file)
     try:
         with p.open('r') as f:
@@ -35,32 +39,22 @@ def getContractInfo():
         print(e)
         sys.exit(1)
     
-    return contracts
+    return contracts.get(chain)
 
-contract_info = getContractInfo()
+# 获取source和destination合约信息
+source_contract_info = getContractInfo('source')
+destination_contract_info = getContractInfo('destination')
 
+# 使用加载的合约信息初始化合约
 source_contract = avax_web3.eth.contract(
-    address=Web3.to_checksum_address(contract_info['source']['address']),
-    abi=contract_info['source']['abi']
+    address=Web3.to_checksum_address(source_contract_info['address']),
+    abi=source_contract_info['abi']
 )
 
 destination_contract = bsc_web3.eth.contract(
-    address=Web3.to_checksum_address(contract_info['destination']['address']),
-    abi=contract_info['destination']['abi']
+    address=Web3.to_checksum_address(destination_contract_info['address']),
+    abi=destination_contract_info['abi']
 )
-
-def connectTo(chain):
-    if chain == 'avax':
-        api_url = avax_rpc_url
-    elif chain == 'bsc':
-        api_url = bsc_rpc_url
-
-    if chain in ['avax', 'bsc']:
-        w3 = Web3(Web3.HTTPProvider(api_url))
-        # inject the poa compatibility middleware to the innermost layer
-        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-    return w3
-
 
 def scanBlocks(chain):
     """
