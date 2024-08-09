@@ -47,6 +47,39 @@ def signAndSendTransaction(w3, account_address, private_key, transaction):
     tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
 
+
+def registerAndCreateToken(source_w3, destination_w3, token_address):
+    try:
+        source_contract_info = getContractInfo('source')
+        destination_contract_info = getContractInfo('destination')
+
+        source_contract = source_w3.eth.contract(address=source_contract_info['address'], abi=source_contract_info['abi'])
+        destination_contract = destination_w3.eth.contract(address=destination_contract_info['address'], abi=destination_contract_info['abi'])
+
+        # Register token on the source chain
+        tx = source_contract.functions.registerToken(token_address).buildTransaction({
+            'from': account_address,
+            'nonce': source_w3.eth.get_transaction_count(account_address),
+            'gas': 2000000,
+            'gasPrice': source_w3.eth.gas_price,
+        })
+        receipt = signAndSendTransaction(source_w3, account_address, private_key, tx)
+        print(f"Token registered on source chain with transaction hash: {receipt.transactionHash.hex()}")
+
+        # Create token on the destination chain
+        tx = destination_contract.functions.createToken(token_address).buildTransaction({
+            'from': account_address,
+            'nonce': destination_w3.eth.get_transaction_count(account_address),
+            'gas': 2000000,
+            'gasPrice': destination_w3.eth.gas_price,
+        })
+        receipt = signAndSendTransaction(destination_w3, account_address, private_key, tx)
+        print(f"Token created on destination chain with transaction hash: {receipt.transactionHash.hex()}")
+
+    except Exception as e:
+        print(f"Failed to register or create token: {e}")
+
+
 def scanBlocks(chain):
     """
         chain - (string) should be either "source" or "destination"
@@ -96,6 +129,12 @@ def scanBlocks(chain):
 
 # Example usage
 if __name__ == "__main__":
+
+    source_w3 = connectTo('avax')
+    destination_w3 = connectTo('bsc')
+    token_address = "0xc677c31AD31F73A5290f5ef067F8CEF8d301e45c"
+    registerAndCreateToken(source_w3, destination_w3, token_address)
+
     # Scan both source and destination chains
     scanBlocks('source')
     scanBlocks('destination')
