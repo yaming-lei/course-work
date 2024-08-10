@@ -8,8 +8,8 @@ from pathlib import Path
 source_chain = 'avax'
 destination_chain = 'bsc'
 contract_info = "contract_info.json"
-private_key = "b3d8146f623407e7691479caeefb6332b60665ad9fee90a8697feaac79b783b0"
-account_address = '0x3b7f6e8011Bc2137ea1Aca77fAeDbe84Af46374A'
+private_key = "ba9d6d3a37734f16b93cfe8410b60640e54048223f4baa2f9fac96096153c8ca"
+account_address = '0xBF6aa3c282df65D083783CE17de5cd00e1d409D4'
 
 def connectTo(chain):
     if chain == 'avax':
