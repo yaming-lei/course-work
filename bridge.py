@@ -97,7 +97,7 @@ def scanBlocks(chain):
                     ).build_transaction({
                         'from': account_address,
                         'chainId': w3_src.eth.chain_id, 
-                        'gas': 20000,
+                        'gas': 500000,
                         'nonce': w3_src.eth.get_transaction_count(account_address, 'pending')
                     })
                     signed_txn = w3_src.eth.account.sign_transaction(txn, private_key=private_key)
