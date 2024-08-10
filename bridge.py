@@ -15,16 +15,18 @@ def connectTo(chain):
     if chain == 'avax':
         api_url = "https://api.avax-test.network/ext/bc/C/rpc"  # AVAX C-chain testnet
         w3 = Web3(Web3.HTTPProvider(api_url))
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # 为 AVAX 添加中间件
 
     elif chain == 'bsc':
         api_url = "https://data-seed-prebsc-1-s1.binance.org:8545/"  # BSC testnet
         w3 = Web3(Web3.HTTPProvider(api_url))
-        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # 为 BSC 添加中间件
 
     else:
         raise ValueError(f"Unsupported chain: {chain}")
 
     return w3
+
 
 def getContractInfo(chain):
     p = Path(__file__).with_name(contract_info)
