@@ -74,7 +74,7 @@ def scanBlocks(chain):
                         event.args['amount']
                     ).build_transaction({
                         'from': account_address,
-                        'chainId': w3_dst.eth.chain_id,  # Use dynamic chainId
+                        'chainId': w3_dst.eth.chain_id,
                         'gas': 2000000,
                         'nonce': w3_dst.eth.get_transaction_count(account_address, 'pending')
                     })
@@ -94,7 +94,7 @@ def scanBlocks(chain):
                         event.args['underlying_token'], event.args['to'], event.args['amount']
                     ).build_transaction({
                         'from': account_address,
-                        'chainId': w3_src.eth.chain_id,  # Use dynamic chainId
+                        'chainId': w3_src.eth.chain_id, 
                         'gas': 2000000,
                         'nonce': w3_src.eth.get_transaction_count(account_address, 'pending')
                     })
